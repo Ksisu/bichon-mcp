@@ -1,0 +1,42 @@
+# /etc/systemd/system/bichon-mcp.service
+[Unit]
+Description=Bichon MCP server (read-only mail archive connector for Claude)
+# wg-quick@wg0: only matters if Bichon is reached over WireGuard; harmless otherwise
+After=network-online.target wg-quick@wg0.service
+Wants=network-online.target
+
+[Service]
+User=bichon-mcp
+Group=bichon-mcp
+EnvironmentFile=/etc/bichon-mcp.env
+Environment=HOME=/var/lib/bichon-mcp
+Environment=MCP_HTTP_HOST=127.0.0.1
+Environment=MCP_HTTP_PORT=8788
+Environment=MCP_STATE_FILE=/var/lib/bichon-mcp/oauth-state.json
+WorkingDirectory=/var/lib/bichon-mcp
+ExecStart=/usr/bin/node /opt/bichon-mcp/bichon-mcp.mjs
+Restart=on-failure
+RestartSec=5
+
+# Small host: keep it on a short leash
+MemoryMax=150M
+Environment=NODE_OPTIONS=--max-old-space-size=96
+
+# Hardening: can only write its own state directory, no privileges, network only
+StateDirectory=bichon-mcp
+StateDirectoryMode=0700
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

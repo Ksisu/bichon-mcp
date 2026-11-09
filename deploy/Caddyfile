@@ -1,0 +1,14 @@
+# Template for /etc/caddy/conf.d/bichon-mcp.caddy — install.sh fills in __MCP_HOST__ (from MCP_PUBLIC_URL)
+# and __ALLOWED_SUBNETS__ (from MCP_ALLOWED_SUBNETS), and makes sure the main Caddyfile imports conf.d.
+# Caddy fetches and renews the TLS certificate itself.
+__MCP_HOST__ {
+	# Only Anthropic's servers (160.79.104.0/21) and your own networks may call the API.
+	# /authorize stays public: it's the login page your browser opens when connecting.
+	@blocked {
+		not remote_ip 160.79.104.0/21 __ALLOWED_SUBNETS__
+		not path /authorize
+	}
+	respond @blocked 403
+
+	reverse_proxy 127.0.0.1:8788
+}
